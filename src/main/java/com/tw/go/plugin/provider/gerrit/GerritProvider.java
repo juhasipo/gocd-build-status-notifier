@@ -4,10 +4,7 @@ import com.tw.go.plugin.PluginSettings;
 import com.tw.go.plugin.provider.Provider;
 import com.tw.go.plugin.provider.gerrit.response.ResponseParser;
 import com.tw.go.plugin.provider.gerrit.response.model.CommitDetails;
-import com.tw.go.plugin.util.AuthenticationType;
-import com.tw.go.plugin.util.HTTPUtils;
-import com.tw.go.plugin.util.JSONUtils;
-import com.tw.go.plugin.util.StringUtils;
+import com.tw.go.plugin.util.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,6 +33,7 @@ public class GerritProvider implements Provider {
         String endPointToUse = pluginSettings.getEndPoint();
         String usernameToUse = pluginSettings.getUsername();
         String passwordToUse = pluginSettings.getPassword();
+        String codeReviewStatusField = pluginSettings.getReviewField();
 
         if (StringUtils.isEmpty(endPointToUse)) {
             endPointToUse = System.getProperty("go.plugin.build.status.gerrit.endpoint");
@@ -46,6 +44,9 @@ public class GerritProvider implements Provider {
         if (StringUtils.isEmpty(passwordToUse)) {
             passwordToUse = System.getProperty("go.plugin.build.status.gerrit.password");
         }
+        if (StringUtils.isEmpty(codeReviewStatusField)) {
+            codeReviewStatusField = System.getProperty("go.plugin.build.status.gerrit.codeReviewStatusField");
+        }
 
         String commitDetailsURL = String.format("%s/a/changes/?q=commit:%s", endPointToUse, revision);
         String commitDetailsResponse = HTTPUtils.getRequest(commitDetailsURL, AuthenticationType.DIGEST, usernameToUse, passwordToUse);
@@ -55,7 +56,7 @@ public class GerritProvider implements Provider {
         request.put("message", String.format("%s: %s", pipelineInstance, trackbackURL));
         Map<String, Object> labels = new HashMap<String, Object>();
         request.put("labels", labels);
-        labels.put("Code-Review", getCodeReviewValue(result));
+        labels.put(codeReviewStatusField, getCodeReviewValue(result));
         String updateStatusURL = String.format("%s/a/changes/%s/revisions/%s/review", endPointToUse, commitDetails.getId(), revision);
         HTTPUtils.postRequest(updateStatusURL, AuthenticationType.DIGEST, usernameToUse, passwordToUse, JSONUtils.toJSON(request));
     }

@@ -41,6 +41,7 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
     public static final String PLUGIN_SETTINGS_USERNAME = "username";
     public static final String PLUGIN_SETTINGS_PASSWORD = "password";
     public static final String PLUGIN_SETTINGS_OAUTH_TOKEN = "oauth_token";
+    public static final String PLUGIN_SETTINGS_REVIEW_FIELD_NAME = "review_field";
     public static final int SUCCESS_RESPONSE_CODE = 200;
     public static final int NOT_FOUND_RESPONSE_CODE = 404;
     public static final int INTERNAL_ERROR_RESPONSE_CODE = 500;
@@ -132,7 +133,8 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
         GoApiResponse response = goApplicationAccessor.submit(createGoApiRequest(GET_PLUGIN_SETTINGS, JSONUtils.toJSON(requestMap)));
         Map<String, String> responseBodyMap = response.responseBody() == null ? new HashMap<String, String>() : (Map<String, String>) JSONUtils.fromJSON(response.responseBody());
         return new PluginSettings(responseBodyMap.get(PLUGIN_SETTINGS_SERVER_BASE_URL), responseBodyMap.get(PLUGIN_SETTINGS_END_POINT),
-                responseBodyMap.get(PLUGIN_SETTINGS_USERNAME), responseBodyMap.get(PLUGIN_SETTINGS_PASSWORD), responseBodyMap.get(PLUGIN_SETTINGS_OAUTH_TOKEN));
+                responseBodyMap.get(PLUGIN_SETTINGS_USERNAME), responseBodyMap.get(PLUGIN_SETTINGS_PASSWORD), responseBodyMap.get(PLUGIN_SETTINGS_OAUTH_TOKEN),
+                responseBodyMap.get(PLUGIN_SETTINGS_REVIEW_FIELD_NAME));
     }
 
     GoPluginApiResponse handleNotificationsInterestedIn() {
