@@ -33,7 +33,7 @@ public class GerritProvider implements Provider {
         String endPointToUse = pluginSettings.getEndPoint();
         String usernameToUse = pluginSettings.getUsername();
         String passwordToUse = pluginSettings.getPassword();
-        String codeReviewStatusField = pluginSettings.getReviewField();
+        String codeReviewStatusField = pluginSettings.getReviewLabel();
 
         if (StringUtils.isEmpty(endPointToUse)) {
             endPointToUse = System.getProperty("go.plugin.build.status.gerrit.endpoint");
