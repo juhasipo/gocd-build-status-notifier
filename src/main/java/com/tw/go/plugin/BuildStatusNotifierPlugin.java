@@ -12,6 +12,7 @@ import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.tw.go.plugin.provider.Provider;
 import com.tw.go.plugin.util.JSONUtils;
+import com.tw.go.plugin.util.ResultParser;
 import com.tw.go.plugin.util.StringUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -23,6 +24,7 @@ import static java.util.Arrays.asList;
 
 @Extension
 public class BuildStatusNotifierPlugin implements GoPlugin {
+
     private static Logger LOGGER = Logger.getLoggerFor(BuildStatusNotifierPlugin.class);
 
     public static final String EXTENSION_NAME = "notification";
@@ -36,12 +38,16 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
 
     public static final String GET_PLUGIN_SETTINGS = "go.processor.plugin-settings.get";
 
+    public static final String CHECKBOX_TRUE_VALUE = "on";
+
     public static final String PLUGIN_SETTINGS_SERVER_BASE_URL = "server_base_url";
     public static final String PLUGIN_SETTINGS_END_POINT = "end_point";
     public static final String PLUGIN_SETTINGS_USERNAME = "username";
     public static final String PLUGIN_SETTINGS_PASSWORD = "password";
     public static final String PLUGIN_SETTINGS_OAUTH_TOKEN = "oauth_token";
     public static final String PLUGIN_SETTINGS_REVIEW_LABEL = "review_label";
+    public static final String PLUGIN_SETTING_RESULT_PREFIX = "result_";
+
     public static final int SUCCESS_RESPONSE_CODE = 200;
     public static final int NOT_FOUND_RESPONSE_CODE = 404;
     public static final int INTERNAL_ERROR_RESPONSE_CODE = 500;
@@ -104,6 +110,10 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
         response.put(PLUGIN_SETTINGS_PASSWORD, createField("Password", null, true, true, "3"));
         response.put(PLUGIN_SETTINGS_OAUTH_TOKEN, createField("OAuth Token", null, true, true, "4"));
         response.put(PLUGIN_SETTINGS_REVIEW_LABEL, createField("Gerrit Review Label", "Code-Review", true, false, "5"));
+        response.put(PLUGIN_SETTING_RESULT_PREFIX + "unknown", createField("Result Unknown", CHECKBOX_TRUE_VALUE, false, false, "7"));
+        response.put(PLUGIN_SETTING_RESULT_PREFIX + "failed", createField("Result Failed", CHECKBOX_TRUE_VALUE, false, false, "8"));
+        response.put(PLUGIN_SETTING_RESULT_PREFIX + "passed", createField("Result Passed", CHECKBOX_TRUE_VALUE, false, false, "9"));
+        response.put(PLUGIN_SETTING_RESULT_PREFIX + "cancelled", createField("Result Cancelled", CHECKBOX_TRUE_VALUE, false, false, "10"));
         return renderJSON(SUCCESS_RESPONSE_CODE, response);
     }
 
@@ -133,9 +143,13 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
         requestMap.put("plugin-id", provider.pluginId());
         GoApiResponse response = goApplicationAccessor.submit(createGoApiRequest(GET_PLUGIN_SETTINGS, JSONUtils.toJSON(requestMap)));
         Map<String, String> responseBodyMap = response.responseBody() == null ? new HashMap<String, String>() : (Map<String, String>) JSONUtils.fromJSON(response.responseBody());
+
+        ResultParser resultParser = new ResultParser(PLUGIN_SETTING_RESULT_PREFIX, CHECKBOX_TRUE_VALUE);
+
         return new PluginSettings(responseBodyMap.get(PLUGIN_SETTINGS_SERVER_BASE_URL), responseBodyMap.get(PLUGIN_SETTINGS_END_POINT),
                 responseBodyMap.get(PLUGIN_SETTINGS_USERNAME), responseBodyMap.get(PLUGIN_SETTINGS_PASSWORD), responseBodyMap.get(PLUGIN_SETTINGS_OAUTH_TOKEN),
-                responseBodyMap.get(PLUGIN_SETTINGS_REVIEW_LABEL));
+                responseBodyMap.get(PLUGIN_SETTINGS_REVIEW_LABEL),
+                resultParser.toSet(responseBodyMap));
     }
 
     GoPluginApiResponse handleNotificationsInterestedIn() {
@@ -178,7 +192,9 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
                     String prId = (String) modificationData.get("PR_ID");
 
                     try {
-                        provider.updateStatus(url, pluginSettings, prId, revision, pipelineStage, result, trackbackURL);
+                        if (pluginSettings.shouldNotify(result)) {
+                            provider.updateStatus(url, pluginSettings, prId, revision, pipelineStage, result, trackbackURL);
+                        }
                     } catch (Exception e) {
                         LOGGER.error(String.format("Error occurred. Could not update build status - URL: %s Revision: %s Build: %s Result: %s", url, revision, pipelineInstance, result), e);
                     }

@@ -1,5 +1,7 @@
 package com.tw.go.plugin;
 
+import java.util.Set;
+
 public class PluginSettings {
     private String serverBaseURL;
     private String endPoint;
@@ -7,17 +9,19 @@ public class PluginSettings {
     private String password;
     private String oauthToken;
     private String reviewLabel;
+    private Set<String> results;
 
     public PluginSettings() {
     }
 
-    public PluginSettings(String serverBaseURL, String endPoint, String username, String password, String oauthToken, String reviewLabel) {
+    public PluginSettings(String serverBaseURL, String endPoint, String username, String password, String oauthToken, String reviewLabel, Set<String> results) {
         this.serverBaseURL = serverBaseURL;
         this.endPoint = endPoint;
         this.username = username;
         this.password = password;
         this.oauthToken = oauthToken;
         this.reviewLabel = reviewLabel;
+        this.results = results;
     }
 
     public String getServerBaseURL() {
@@ -66,6 +70,18 @@ public class PluginSettings {
 
     public void setReviewLabel(String reviewLabel) {
         this.reviewLabel = reviewLabel;
+    }
+
+    public Set<String> getResults() {
+        return results;
+    }
+
+    public boolean shouldNotify(String status) {
+        if (status == null) {
+            return true;
+        } else {
+            return results.contains(status.toUpperCase());
+        }
     }
 
     @Override
