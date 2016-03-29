@@ -47,6 +47,7 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
     public static final String PLUGIN_SETTINGS_OAUTH_TOKEN = "oauth_token";
     public static final String PLUGIN_SETTINGS_REVIEW_LABEL = "review_label";
     public static final String PLUGIN_SETTING_RESULT_PREFIX = "result_";
+    public static final String PLUGIN_SETTINGS_PASS_AT_END = "pass_at_end";
 
     public static final int SUCCESS_RESPONSE_CODE = 200;
     public static final int NOT_FOUND_RESPONSE_CODE = 404;
@@ -149,7 +150,8 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
         return new PluginSettings(responseBodyMap.get(PLUGIN_SETTINGS_SERVER_BASE_URL), responseBodyMap.get(PLUGIN_SETTINGS_END_POINT),
                 responseBodyMap.get(PLUGIN_SETTINGS_USERNAME), responseBodyMap.get(PLUGIN_SETTINGS_PASSWORD), responseBodyMap.get(PLUGIN_SETTINGS_OAUTH_TOKEN),
                 responseBodyMap.get(PLUGIN_SETTINGS_REVIEW_LABEL),
-                resultParser.toSet(responseBodyMap));
+                resultParser.toSet(responseBodyMap),
+                "on".equals(responseBodyMap.get(PLUGIN_SETTINGS_PASS_AT_END)));
     }
 
     GoPluginApiResponse handleNotificationsInterestedIn() {
@@ -192,7 +194,7 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
                     String prId = (String) modificationData.get("PR_ID");
 
                     try {
-                        if (pluginSettings.shouldNotify(result)) {
+                        if (pluginSettings.shouldNotify(result) && (pluginSettings.isPassAtEnd() || isLastStage(pipelineStage))) {
                             provider.updateStatus(url, pluginSettings, prId, revision, pipelineStage, result, trackbackURL);
                         }
                     } catch (Exception e) {
@@ -212,6 +214,11 @@ public class BuildStatusNotifierPlugin implements GoPlugin {
 
         response.put("messages", messages);
         return renderJSON(responseCode, response);
+    }
+
+    private boolean isLastStage(String pipelineStage) {
+        String lastStage = "";
+        return lastStage.equals(pipelineStage);
     }
 
     private boolean isMaterialOfType(Map material, String pollerPluginId) {

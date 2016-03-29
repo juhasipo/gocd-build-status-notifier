@@ -10,11 +10,12 @@ public class PluginSettings {
     private String oauthToken;
     private String reviewLabel;
     private Set<String> results;
+    private boolean passAtEnd;
 
     public PluginSettings() {
     }
 
-    public PluginSettings(String serverBaseURL, String endPoint, String username, String password, String oauthToken, String reviewLabel, Set<String> results) {
+    public PluginSettings(String serverBaseURL, String endPoint, String username, String password, String oauthToken, String reviewLabel, Set<String> results, boolean passAtEnd) {
         this.serverBaseURL = serverBaseURL;
         this.endPoint = endPoint;
         this.username = username;
@@ -22,6 +23,7 @@ public class PluginSettings {
         this.oauthToken = oauthToken;
         this.reviewLabel = reviewLabel;
         this.results = results;
+        this.passAtEnd = passAtEnd;
     }
 
     public String getServerBaseURL() {
@@ -74,6 +76,10 @@ public class PluginSettings {
 
     public Set<String> getResults() {
         return results;
+    }
+
+    public boolean isPassAtEnd() {
+        return passAtEnd;
     }
 
     public boolean shouldNotify(String status) {
